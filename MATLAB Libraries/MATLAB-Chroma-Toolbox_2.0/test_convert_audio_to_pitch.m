@@ -44,6 +44,7 @@ dirFileNames = {
     'data_WAV/','Systematic_Scale-C-Major_Meinard_fast.wav';
     'data_WAV/','Systematic_Scale-C-Major_Meinard_middle.wav';
     'data_WAV/','Systematic_Chord-C-Major_Eight-Instruments.wav';
+    'data_WAV/','C_64kb.wav';
     };
 
 for n=1:size(dirFileNames,1)

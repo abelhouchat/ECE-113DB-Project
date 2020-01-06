@@ -38,13 +38,13 @@ clear;
 directory = 'data_feature/';
 
 
-%filename = 'Bach_BWV988-Aria-Measures1-4_Meinard_fast.wav';
+filename = 'Bach_BWV988-Aria-Measures1-4_Meinard_fast.wav';
 %filename = 'Burgmueller_Op100-02-FirstPart_Meinard_SE.wav';
 %filename = 'Systematic_Cadence-C-Major_Meinard_portato.wav';
 %filename = 'Systematic_Cadence-C-Major_Meinard_staccato.wav';
 %filename = 'Systematic_Scale-C-Major_Meinard_fast.wav';
 %filename = 'Systematic_Scale-C-Major_Meinard_middle.wav';
-filename = 'Systematic_Chord-C-Major_Eight-Instruments.wav';
+%filename = 'Systematic_Chord-C-Major_Eight-Instruments.wav';
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
