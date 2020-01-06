@@ -3,13 +3,15 @@ import numpy as np
 from scipy.linalg import circulant
 from scipy.stats import mode
 
+
 chords = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B',
         'Cm', 'Cm#', 'Dm', 'Dm#', 'Em', 'Fm', 'Fm#', 'Gm', 'Gm#', 'Am', 'Am#', 'Bm', 'NC']
+
 
 def make_templates():
     template_major = np.array([1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0])
     template_minor = np.array([1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0])
-    no_chord = 1 / 12 * np.ones((12, 1))
+    no_chord = (1 / 3) * np.ones((12, 1))
 
     mat_major = circulant(template_major)
     mat_minor = circulant(template_minor)
@@ -21,16 +23,15 @@ def make_templates():
 
 def chromagram(audio):
     y, sr = librosa.load(audio)
-
     y_harmonic, y_percussive = librosa.effects.hpss(y)
 
     chroma = librosa.feature.chroma_cqt(y_harmonic, sr)
 
     return chroma
 
+
 def estimate_chords(audio):
     chroma = chromagram(audio)
-
     frames = chroma.shape[1]
 
     templates = make_templates()
@@ -43,6 +44,7 @@ def estimate_chords(audio):
         chord_sequence.append([np.argmax(similarity)])
     
     return chord_sequence
+
 
 def mode_filtering(sequence, padding = False):
     window = 15
@@ -64,6 +66,7 @@ def mode_filtering(sequence, padding = False):
 
     return filtered_sequence
 
+
 def find_chord_sequence(audio):
     chord_nums = estimate_chords(audio)
 
@@ -74,7 +77,7 @@ def find_chord_sequence(audio):
     return chord_sequence
 
 
-audio = 'piano_major_C.wav'
+audio = 'PianoChordsElectric_first_fifty_sec.wav'
 
 chord_sequence = find_chord_sequence(audio)
 print(chord_sequence)
