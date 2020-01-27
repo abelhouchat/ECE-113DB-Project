@@ -105,7 +105,7 @@ def find_chord_sequence(audio):
     return chord_sequence
 
 
-audio = 'PianoChordsElectric_first_fifty_sec.wav'
+audio = 'PianoChordsElectric_hundred_sec.wav'
 # True chord sequence: C, G, D, A, E, B, F#, C#, Ab, Eb, Bb, F
 
 chord_sequence = find_chord_sequence(audio)

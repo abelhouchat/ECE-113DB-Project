@@ -1,7 +1,7 @@
 #ifndef TEMPLATES_H
 #define TEMPLATES_H
 
-#define N 0.35355339059327376
+#define NO_CHORD 0.35355339059327376
     // 1 / sqrt(8), for the no-chord template
 #define NUM_OF_CHORDS 25
     // 12 major, 12 minor, and one for no-chord
@@ -33,6 +33,6 @@ int templates[25][12] = {{1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0},
                         {1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0},
                         {0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0},
                         {0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1},
-                        {N, N, N, N, N, N, N, N, N, N, N, N}};
+                        {NO_CHORD, NO_CHORD, NO_CHORD, NO_CHORD, NO_CHORD, NO_CHORD, NO_CHORD, NO_CHORD, NO_CHORD, NO_CHORD, NO_CHORD, NO_CHORD}};
 
 #endif

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import signal
 
-y, sr = librosa.load('PianoChordsElectric_first_fifty_sec.wav')
+y, sr = librosa.load('piano_major_C.wav')
 y_harmonic = librosa.effects.harmonic(y)
 chroma = librosa.feature.chroma_cqt(y = y_harmonic, sr = sr)
 
