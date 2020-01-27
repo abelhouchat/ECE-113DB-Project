@@ -7,14 +7,13 @@
 #define NUM_OCTAVES 2
 #define NUM_BINS_TO_SEARCH 2
 
-#define N BUFFER_SIZE
-
 #define FRAME_SIZE 512
-#define FS 8000
+#define FS 16000
 
 #define PI 3.14159265358979323
 
 #include <math.h>
+#include <ti/dsplib/dsplib.h>
 
 void initialize(int16_t frame_size, int16_t fs);
 
@@ -50,11 +49,11 @@ int16_t chroma_ready;
 
 
 #pragma DATA_ALIGN(x_sp, 8);
-float   x_sp [2 * N];
+float   x_sp [2 * BUFFER_SIZE];
 #pragma DATA_ALIGN(y_sp, 8);
-float   y_sp [2 * N];
+float   y_sp [2 * BUFFER_SIZE];
 #pragma DATA_ALIGN(w_sp, 8);
-float   w_sp [2 * N];
+float   w_sp [2 * BUFFER_SIZE];
 
 // brev routine called by FFT routine
 unsigned char brev[64] = {
@@ -71,15 +70,15 @@ unsigned char brev[64] = {
 // The seperateRealImg function separates the real and imaginary data
 // of the FFT output. This is needed so that the data can be plotted
 // using the CCS graph feature
-float y_real_sp[N];
-float y_imag_sp[N];
-float y_mag[N];
+float y_real_sp[BUFFER_SIZE];
+float y_imag_sp[BUFFER_SIZE];
+float y_mag[BUFFER_SIZE];
 
 separateRealImg()
 {
     int i, j;
 
-    for (i = 0, j = 0; j < N; i += 2, j++)
+    for (i = 0, j = 0; j < BUFFER_SIZE; i += 2, j++)
     {
         y_real_sp[j] = y_sp[i];
         y_imag_sp[j] = y_sp[i + 1];
@@ -120,8 +119,8 @@ void gen_twiddle_fft_sp(float* w, int n)
 
 void perform_fft()
 {
-    gen_twiddle_fft_sp(w_sp, N);
-    DSPF_sp_fftSPxSP(N, x_sp, w_sp, y_sp, brev, 4, 0, N);
+    gen_twiddle_fft_sp(w_sp, BUFFER_SIZE);
+    DSPF_sp_fftSPxSP(BUFFER_SIZE, x_sp, w_sp, y_sp, brev, 4, 0, BUFFER_SIZE);
     separateRealImg();
 }
 

@@ -18,6 +18,8 @@ void initialize()
 
     // make_hamming_window();
 
+    set_input_audio_frame_size();
+    
     num_samples_since_last_calculation = 0;
 
     chroma_calculation_interval = 4096;
@@ -164,9 +166,9 @@ void calculate_magnitude_spectrum()
 
 void make_hamming_window()
 {
-    window = (float*) malloc(N * sizeof(float));
+    window = (float*) malloc(BUFFER_SIZE * sizeof(float));
 
-    for (int16_t n = 0; n < N; n++)
+    for (int16_t n = 0; n < BUFFER_SIZE; n++)
         window[n] = 0.54 - 0.46 * cos(2 * PI * (((float)n) / ((float) BUFFER_SIZE)));
 }
 
