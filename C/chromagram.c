@@ -116,7 +116,7 @@ void initialize()
 }
 
 
-float* get_chromagram(float* input_audio_frame)
+float* get_chromagram(int16_t* input_audio_frame)
 {
 	process_audio_frame(input_audio_frame);
     return chromagram;
@@ -127,7 +127,7 @@ int is_ready()
     return chroma_ready;
 }
 
-void process_audio_frame(float* input_audio_frame)
+void process_audio_frame(int16_t* input_audio_frame)
 {
     chroma_ready = 0;
 
@@ -147,7 +147,7 @@ void process_audio_frame(float* input_audio_frame)
     calculate_chromagram();
 }
 
-void downsample_frame(float* input_audio_frame)
+void downsample_frame(int16_t* input_audio_frame)
 {
     float* filtered_frame = (float*) malloc(FRAME_SIZE * sizeof(float));
 
@@ -249,6 +249,7 @@ void calculate_magnitude_spectrum()
     int n;
     for (n = 0; n < (BUFFER_SIZE / 2) + 1; n++)
 	{
+//    	magnitude_spectrum[n] = sqrt(y_real_sp[n] * y_real_sp[n] + y_imag_sp[n] * y_imag_sp[n]);
     	magnitude_spectrum[n] = sqrt(sqrt(y_real_sp[n] * y_real_sp[n] + y_imag_sp[n] * y_imag_sp[n]));
 	}
 }
@@ -262,4 +263,38 @@ void make_hamming_window()
     {
     	window[n] = 0.54 - 0.46 * cos(2 * PI * (((float)n) / ((float) BUFFER_SIZE)));
     }
+}
+
+// Generated from www-users.cs.york.ac.uk/~fisher/mkfilter
+void low_pass(int16_t* fft, int float_size, int order)
+{
+	float gain = 3.469103409e+04;
+	float* xv = (float*)malloc((order + 1) * sizeof(float));
+	float* yv = (float*)malloc((order + 1) * sizeof(float));
+	int i;
+	for (i = 0; i < float_size; i++)
+	{
+		xv[0] = xv[1];
+		xv[1] = xv[2];
+		xv[2] = xv[3];
+		xv[3] = xv[4];
+		xv[4] = xv[5];
+		xv[5] = xv[6];
+		xv[6] = fft[i] / gain;
+		yv[0] = yv[1];
+		yv[1] = yv[2];
+		yv[2] = yv[3];
+		yv[3] = yv[4];
+		yv[4] = yv[5];
+		yv[5] = yv[6];
+		yv[6] = (xv[0] + xv[6]) + 6 * (xv[1] + xv[5]) + 15 * (xv[2] + xv[4])
+		                     + 20 * xv[3]
+		                               + ( -0.2165828556 * yv[0]) + (  1.6277147849 * yv[1])
+		                                                    + ( -5.1476426814 * yv[2]) + (  8.7791079706 * yv[3])
+		                                                    + ( -8.5290050840 * yv[4]) + (  4.4845630084 * yv[5]);
+		fft[i] = (int16_t)yv[6];
+	}
+		free(xv);
+		free(yv);
+//	return fft;
 }
