@@ -11,6 +11,7 @@ float* window;
 float* magnitude_spectrum;
 float* chromagram;
 
+// The 12 frequencies we consider.
 float note_frequencies[12];
 
 int downsampled_audio_frame_size;
@@ -102,8 +103,13 @@ void perform_fft()
 // End of FFT stuff
 
 
+// Initialize the frequencies to look at and the chromagram vector.
 void initialize()
 {
+	/*
+	 * Initialize the 12 frequencies to consider based on the
+	 * reference frequency.
+	 */
     int i;
     for (i = 0; i < 12; i++)
     {
@@ -116,25 +122,30 @@ void initialize()
 }
 
 
+// Return the chromagram as a float vector.
 float* get_chromagram(int16_t* input_audio_frame)
 {
 	process_audio_frame(input_audio_frame);
     return chromagram;
 }
 
+// Returns 1 if the chromagram has been calculated, otherwise returns 0.
 int is_ready()
 {
     return chroma_ready;
 }
 
+// Downsample and calculate the chromagram for the input audio frame.
 void process_audio_frame(int16_t* input_audio_frame)
 {
     chroma_ready = 0;
 
+    // Downsample the input audio signal.
     downsampled_audio_frame_size = FRAME_SIZE / 4;
 	downsampled_input_audio_frame = (float*) malloc(downsampled_audio_frame_size * sizeof(float));
     downsample_frame(input_audio_frame);
 
+    // Fill the FFT input vector with the downsampled audio.
     int i;
     for (i = 0; i < BUFFER_SIZE; i++)
     {
@@ -147,10 +158,12 @@ void process_audio_frame(int16_t* input_audio_frame)
     calculate_chromagram();
 }
 
+// Downsample the input frame by a factor of four.
 void downsample_frame(int16_t* input_audio_frame)
 {
     float* filtered_frame = (float*) malloc(FRAME_SIZE * sizeof(float));
 
+    // Constants for downsampling, taken from Stark's paper.
     float b0 = 0.2929;
     float b1 = 0.5858;
     float b2 = 0.2929;
@@ -162,6 +175,7 @@ void downsample_frame(int16_t* input_audio_frame)
     float y_1 = 0;
     float y_2 = 0;
 
+    // Determine what the downsampled samples should be.
     int i;
     for (i = 0; i < FRAME_SIZE; i++)
     {
@@ -174,6 +188,7 @@ void downsample_frame(int16_t* input_audio_frame)
         y_1 = filtered_frame[i];
     }
 
+    // Fill the downsampled frame.
     for (i = 0; i < FRAME_SIZE / 4; i++)
     {
         downsampled_input_audio_frame[i] = filtered_frame[i * 4];
@@ -186,27 +201,38 @@ void calculate_chromagram()
 {
     calculate_magnitude_spectrum();
 
+    // Constant for determining the center bin.
     float divisor_ratio = (FS / 4.0) / ((float)BUFFER_SIZE);
 
+    // Perform over all 12 frequencies.
     int n;
     for (n = 0; n < 12; n++)
     {
         float chroma_sum = 0.0;
 
+        // Search over 2 octaves.
         int octave;
         for (octave = 1; octave <= NUM_OCTAVES; octave++)
         {
             float note_sum = 0.0;
 
+            // Search over two harmonics.
             int harmonic;
             for (harmonic = 1; harmonic <= NUM_HARMONICS; harmonic++)
             {
+            	// Calculate the center bin to look for a maximum at.
                 int center_bin = round((note_frequencies[n] * octave * harmonic) / divisor_ratio);
+                // Left-most bin to search.
                 int min_bin = center_bin - (NUM_BINS_TO_SEARCH * harmonic);
+                // Right-most bin to search.
                 int max_bin = center_bin + (NUM_BINS_TO_SEARCH * harmonic);
 
                 float max_val = 0.0;
 
+                /*
+                 * Find the maximum value in the magnitude spectrum
+                 * within the bins we are searching.
+                 */
                 int k;
                 for (k = min_bin; k < max_bin; k++)
                 {
@@ -216,12 +242,18 @@ void calculate_chromagram()
                     }
                 }
 
+                // Sum the maximum over the harmonics.
                 note_sum += (max_val / (float) harmonic);
             }
 
+            // Sum over the octaves.
             chroma_sum += note_sum;
         }
 
+        /*
+         * Chroma value is the sum over octaves and harmonics of
+         * the maximum magnitude spectrum values.
+         */
         chromagram[n] = chroma_sum;
     }
 
@@ -230,6 +262,10 @@ void calculate_chromagram()
     chroma_ready = 1;
 }
 
+/*
+ * Calculate the square root of the magnitude of the FFT of the
+ * audio signal.
+ */
 void calculate_magnitude_spectrum()
 {
     magnitude_spectrum = (float*) malloc((BUFFER_SIZE / 2 + 1) * sizeof(float));
@@ -249,7 +285,6 @@ void calculate_magnitude_spectrum()
     int n;
     for (n = 0; n < (BUFFER_SIZE / 2) + 1; n++)
 	{
-//    	magnitude_spectrum[n] = sqrt(y_real_sp[n] * y_real_sp[n] + y_imag_sp[n] * y_imag_sp[n]);
     	magnitude_spectrum[n] = sqrt(sqrt(y_real_sp[n] * y_real_sp[n] + y_imag_sp[n] * y_imag_sp[n]));
 	}
 }
@@ -265,12 +300,15 @@ void make_hamming_window()
     }
 }
 
-// Generated from www-users.cs.york.ac.uk/~fisher/mkfilter
-void low_pass(int16_t* fft, int float_size, int order)
+/*
+ * Low-pass Butterworth filter applied to input audio.
+ * Generated from www-users.cs.york.ac.uk/~fisher/mkfilter
+ * Cutoff frequency at 6000 Hz.
+ */
+void low_pass(int16_t* signal, int float_size)
 {
-	float gain = 3.469103409e+04;
-	float* xv = (float*)malloc((order + 1) * sizeof(float));
-	float* yv = (float*)malloc((order + 1) * sizeof(float));
+	float* xv = (float*)malloc((ORDER + 1) * sizeof(float));
+	float* yv = (float*)malloc((ORDER + 1) * sizeof(float));
 	int i;
 	for (i = 0; i < float_size; i++)
 	{
@@ -280,21 +318,22 @@ void low_pass(int16_t* fft, int float_size, int order)
 		xv[3] = xv[4];
 		xv[4] = xv[5];
 		xv[5] = xv[6];
-		xv[6] = fft[i] / gain;
+		xv[6] = signal[i] / GAIN;
 		yv[0] = yv[1];
 		yv[1] = yv[2];
 		yv[2] = yv[3];
 		yv[3] = yv[4];
 		yv[4] = yv[5];
 		yv[5] = yv[6];
-		yv[6] = (xv[0] + xv[6]) + 6 * (xv[1] + xv[5]) + 15 * (xv[2] + xv[4])
-		                     + 20 * xv[3]
-		                               + ( -0.2165828556 * yv[0]) + (  1.6277147849 * yv[1])
-		                                                    + ( -5.1476426814 * yv[2]) + (  8.7791079706 * yv[3])
-		                                                    + ( -8.5290050840 * yv[4]) + (  4.4845630084 * yv[5]);
-		fft[i] = (int16_t)yv[6];
+		yv[6] = (xv[0] + xv[6])
+				+ 6 * (xv[1] + xv[5])
+				+ 15 * (xv[2] + xv[4])
+				+ 20 * xv[3]
+			    + ( -0.0433569884 * yv[0]) + ( -0.3911172306 * yv[1])
+			    + ( -1.5172788447 * yv[2]) + ( -3.2597642798 * yv[3])
+			    + ( -4.1360809983 * yv[4]) + ( -2.9785299261 * yv[5]);
+		signal[i] = (int16_t)yv[6];
 	}
 		free(xv);
 		free(yv);
-//	return fft;
 }
