@@ -4,9 +4,10 @@
 #include <math.h>
 
 
-// Calculates the norm of a float vector.
 float norm(float* a)
 {
+	/* Calculates the norm of a float vector. */
+
     float magnitude = 0;
 
     int i;
@@ -18,13 +19,16 @@ float norm(float* a)
     return sqrt(magnitude);
 }
 
-/*
- * Calculates the cosine similarity between two float vectors,
- * given by <a, b> / (||a|| * ||b||)
- */
 float cosine_similarity(float* a, float* b)
 {
-	// Dot product of a and b.
+	/*
+	 * Calculates the cosine similarity between two float vectors,
+	 * given by <a, b> / (||a|| * ||b||).
+	 *
+	 * First calculates the dot product, then divides by the
+	 * product of the norms.
+	 */
+
     float dot = 0;
 
     int i;
@@ -37,19 +41,21 @@ float cosine_similarity(float* a, float* b)
     return dot;
 }
 
-// Determines which chord a chromagram corresponds to.
 char* find_chord(float* chroma)
 {
 	/*
-	 * Keep array of cosine similarities between chromagram and
-	 * templates.
+	 * Determines which chord a chromagram corresponds to.
+	 *
+	 * Keeps an array of cosine similarities between the
+	 * chromagram and the templates, then finds the maximum
+	 * and the corresponding chord.
 	 */
+
 	float similarities[NUM_OF_CHORDS];
 
 	float maximum = 0;
 	int max_index;
 
-	// Find the maximum cosine similarity and its corresponding index.
 	int i;
 	for (i = 0; i < NUM_OF_CHORDS; i++)
 	{

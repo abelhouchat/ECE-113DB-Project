@@ -4,14 +4,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import signal
 
-y, sr = librosa.load('piano_major_C.wav')
+y, sr = librosa.load('c1.wav')
 y_harmonic = librosa.effects.harmonic(y)
 chroma = librosa.feature.chroma_cqt(y = y_harmonic, sr = sr)
 
 plt.figure(figsize = (10, 4))
 librosa.display.specshow(chroma, y_axis = 'chroma', x_axis = 'time')
 plt.colorbar()
-plt.title('Chromagram')
+plt.title('Chromagram for C major')
 plt.tight_layout()
 plt.show()
 

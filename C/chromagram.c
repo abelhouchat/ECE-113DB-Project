@@ -11,16 +11,15 @@ float* window;
 float* magnitude_spectrum;
 float* chromagram;
 
-// The 12 frequencies we consider.
 float note_frequencies[12];
 
 int downsampled_audio_frame_size;
+
 int chroma_ready;
 
 
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 // FFT stuff
-
 
 #pragma DATA_ALIGN(x_sp, 8);
 float   x_sp [2 * BUFFER_SIZE];
@@ -98,18 +97,20 @@ void perform_fft()
     separateRealImg();
 }
 
-
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 // End of FFT stuff
 
 
-// Initialize the frequencies to look at and the chromagram vector.
 void initialize()
 {
 	/*
-	 * Initialize the 12 frequencies to consider based on the
-	 * reference frequency.
+	 * Initializes the chromagram vector and the frequencies to look
+	 * at.
+	 *
+	 * Initializes the 12 frequencies to consider based on the reference
+	 * frequency and allocates memory for the chromagram.
 	 */
+
     int i;
     for (i = 0; i < 12; i++)
     {
@@ -121,31 +122,60 @@ void initialize()
     chroma_ready = 0;
 }
 
-
-// Return the chromagram as a float vector.
-float* get_chromagram(int16_t* input_audio_frame)
+void downsample_frame(int16_t* input_audio_frame)
 {
-	process_audio_frame(input_audio_frame);
-    return chromagram;
+	/*
+	 * Downsamples the input frame by a factor of four.
+	 *
+	 * Uses algorithm described by Adam Stark and Mark Plumbley.
+	 */
+
+    float* filtered_frame = (float*) malloc(FRAME_SIZE * sizeof(float));
+
+    float b0 = 0.2929;
+    float b1 = 0.5858;
+    float b2 = 0.2929;
+    float a2 = 0.1716;
+
+    float x_1 = 0;
+    float x_2 = 0;
+    float y_1 = 0;
+    float y_2 = 0;
+
+    int i;
+    for (i = 0; i < FRAME_SIZE; i++)
+    {
+    	filtered_frame[i] = input_audio_frame[i] * b0 + x_1 * b1 + x_2 * b2 - y_2 * a2;
+
+        x_2 = x_1;
+        x_1 = input_audio_frame[i];
+        y_2 = y_1;
+        y_1 = filtered_frame[i];
+    }
+
+    for (i = 0; i < FRAME_SIZE / 4; i++)
+    {
+        downsampled_input_audio_frame[i] = filtered_frame[i * 4];
+    }
+
+    free(filtered_frame);
 }
 
-// Returns 1 if the chromagram has been calculated, otherwise returns 0.
-int is_ready()
-{
-    return chroma_ready;
-}
-
-// Downsample and calculate the chromagram for the input audio frame.
 void process_audio_frame(int16_t* input_audio_frame)
 {
+	/*
+	 * Processes the audio input and generate the chromagram.
+	 *
+	 * First downsamples the input audio signal and calculates the
+	 * magnitude of the FFT, then generates the chromagram.
+	 */
+
     chroma_ready = 0;
 
-    // Downsample the input audio signal.
     downsampled_audio_frame_size = FRAME_SIZE / 4;
 	downsampled_input_audio_frame = (float*) malloc(downsampled_audio_frame_size * sizeof(float));
     downsample_frame(input_audio_frame);
 
-    // Fill the FFT input vector with the downsampled audio.
     int i;
     for (i = 0; i < BUFFER_SIZE; i++)
     {
@@ -158,116 +188,13 @@ void process_audio_frame(int16_t* input_audio_frame)
     calculate_chromagram();
 }
 
-// Downsample the input frame by a factor of four.
-void downsample_frame(int16_t* input_audio_frame)
-{
-    float* filtered_frame = (float*) malloc(FRAME_SIZE * sizeof(float));
-
-    // Constants for downsampling, taken from Stark's paper.
-    float b0 = 0.2929;
-    float b1 = 0.5858;
-    float b2 = 0.2929;
-//    float a1 = -0.0000;
-    float a2 = 0.1716;
-
-    float x_1 = 0;
-    float x_2 = 0;
-    float y_1 = 0;
-    float y_2 = 0;
-
-    // Determine what the downsampled samples should be.
-    int i;
-    for (i = 0; i < FRAME_SIZE; i++)
-    {
-//        filtered_frame[i] = input_audio_frame[i] * b0 + x_1 * b1 + x_2 * b2 - y_1 * a1 - y_2 * a2;
-    	filtered_frame[i] = input_audio_frame[i] * b0 + x_1 * b1 + x_2 * b2 - y_2 * a2;
-
-        x_2 = x_1;
-        x_1 = input_audio_frame[i];
-        y_2 = y_1;
-        y_1 = filtered_frame[i];
-    }
-
-    // Fill the downsampled frame.
-    for (i = 0; i < FRAME_SIZE / 4; i++)
-    {
-        downsampled_input_audio_frame[i] = filtered_frame[i * 4];
-    }
-
-    free(filtered_frame);
-}
-
-void calculate_chromagram()
-{
-    calculate_magnitude_spectrum();
-
-    // Constant for determining the center bin.
-    float divisor_ratio = (FS / 4.0) / ((float)BUFFER_SIZE);
-
-    // Perform over all 12 frequencies.
-    int n;
-    for (n = 0; n < 12; n++)
-    {
-        float chroma_sum = 0.0;
-
-        // Search over 2 octaves.
-        int octave;
-        for (octave = 1; octave <= NUM_OCTAVES; octave++)
-        {
-            float note_sum = 0.0;
-
-            // Search over two harmonics.
-            int harmonic;
-            for (harmonic = 1; harmonic <= NUM_HARMONICS; harmonic++)
-            {
-            	// Calculate the center bin to look for a maximum at.
-                int center_bin = round((note_frequencies[n] * octave * harmonic) / divisor_ratio);
-                // Left-most bin to search.
-                int min_bin = center_bin - (NUM_BINS_TO_SEARCH * harmonic);
-                // Right-most bin to search.
-                int max_bin = center_bin + (NUM_BINS_TO_SEARCH * harmonic);
-
-                float max_val = 0.0;
-
-                /*
-                 * Find the maximum value in the magnitude spectrum
-                 * within the bins we are searching.
-                 */
-                int k;
-                for (k = min_bin; k < max_bin; k++)
-                {
-                    if (magnitude_spectrum[k] > max_val)
-                    {
-                    	max_val = magnitude_spectrum[k];
-                    }
-                }
-
-                // Sum the maximum over the harmonics.
-                note_sum += (max_val / (float) harmonic);
-            }
-
-            // Sum over the octaves.
-            chroma_sum += note_sum;
-        }
-
-        /*
-         * Chroma value is the sum over octaves and harmonics of
-         * the maximum magnitude spectrum values.
-         */
-        chromagram[n] = chroma_sum;
-    }
-
-    free(magnitude_spectrum);
-
-    chroma_ready = 1;
-}
-
-/*
- * Calculate the square root of the magnitude of the FFT of the
- * audio signal.
- */
 void calculate_magnitude_spectrum()
 {
+	/*
+	 * Calculates the square root of the magnitude of the FFT of the
+	 * audio signal.
+	 */
+
     magnitude_spectrum = (float*) malloc((BUFFER_SIZE / 2 + 1) * sizeof(float));
 
     make_hamming_window();
@@ -289,8 +216,86 @@ void calculate_magnitude_spectrum()
 	}
 }
 
+void calculate_chromagram()
+{
+	/*
+	 * Calculates the chromagram based off the algorithm described
+	 * by Adam Stark and Mark Plumbley.
+	 *
+	 * First we generate the magnitude spectrum of the FFT. Then,
+	 * for each of the 12 frequencies generated by initialize(), we
+	 * search over 2 octaves and for each octave we search over 2
+	 * harmonics. For each harmonic, we look at the two bins on
+	 * either side of the frequency and look for the maximum value
+	 * in the magnitude spectrum. The chroma value for each frequency
+	 * is generated by summing the maxima over harmonics and octaves.
+	 */
+
+    calculate_magnitude_spectrum();
+
+    float divisor_ratio = (FS / 4.0) / ((float)BUFFER_SIZE);
+
+    int n;
+    for (n = 0; n < 12; n++)
+    {
+        float chroma_sum = 0.0;
+
+        int octave;
+        for (octave = 1; octave <= NUM_OCTAVES; octave++)
+        {
+            float note_sum = 0.0;
+
+            int harmonic;
+            for (harmonic = 1; harmonic <= NUM_HARMONICS; harmonic++)
+            {
+                int center_bin = round((note_frequencies[n] * octave * harmonic) / divisor_ratio);
+                int min_bin = center_bin - (NUM_BINS_TO_SEARCH * harmonic);
+                int max_bin = center_bin + (NUM_BINS_TO_SEARCH * harmonic);
+
+                float max_val = 0.0;
+
+                int k;
+                for (k = min_bin; k < max_bin; k++)
+                {
+                    if (magnitude_spectrum[k] > max_val)
+                    {
+                    	max_val = magnitude_spectrum[k];
+                    }
+                }
+
+                note_sum += (max_val / (float) harmonic);
+            }
+
+            chroma_sum += note_sum;
+        }
+
+        chromagram[n] = chroma_sum;
+    }
+
+    free(magnitude_spectrum);
+
+    chroma_ready = 1;
+}
+
+float* get_chromagram(int16_t* input_audio_frame)
+{
+	/* Returns the chromagram as a float vector. */
+
+	process_audio_frame(input_audio_frame);
+    return chromagram;
+}
+
+int is_ready()
+{
+	/* Returns 1 if the chromagram has been calculated, otherwise returns 0. */
+
+    return chroma_ready;
+}
+
 void make_hamming_window()
 {
+	/* Generates the Hamming window. */
+
     window = (float*) malloc(BUFFER_SIZE * sizeof(float));
 
     int n;
@@ -300,15 +305,19 @@ void make_hamming_window()
     }
 }
 
-/*
- * Low-pass Butterworth filter applied to input audio.
- * Generated from www-users.cs.york.ac.uk/~fisher/mkfilter
- * Cutoff frequency at 6000 Hz.
- */
 void low_pass(int16_t* signal, int float_size)
 {
+	/*
+	 * Low-pass Butterworth filter applied to input audio.
+	 * Generated from www-users.cs.york.ac.uk/~fisher/mkfilter,
+	 * which uses the bilinear transform to generate a filter.
+	 *
+	 * Cutoff frequency at 6000 Hz.
+	 */
+
 	float* xv = (float*)malloc((ORDER + 1) * sizeof(float));
 	float* yv = (float*)malloc((ORDER + 1) * sizeof(float));
+
 	int i;
 	for (i = 0; i < float_size; i++)
 	{
@@ -334,6 +343,7 @@ void low_pass(int16_t* signal, int float_size)
 			    + ( -4.1360809983 * yv[4]) + ( -2.9785299261 * yv[5]);
 		signal[i] = (int16_t)yv[6];
 	}
-		free(xv);
-		free(yv);
+
+	free(xv);
+	free(yv);
 }

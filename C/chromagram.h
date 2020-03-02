@@ -10,66 +10,75 @@
 #include "L138_LCDK_switch_led.h"
 #include "evmomapl138_gpio.h"
 
-// Reference frequency corresponding to the lowest octave.
-#define REFERENCE_FREQUENCY 130.81278265
-
-// Size for FFT and chromagram calculations.
-#define BUFFER_SIZE 2048
-
-// Only consider 2 harmonics to improve accuracy across multiple instruments.
+#define REFERENCE_FREQUENCY 130.8127826
+	/* Reference frequency corresponding to the lowest octave. */
+#define BUFFER_SIZE 1024
+	/* Size for FFT and chromagram calculations. */
 #define NUM_HARMONICS 2
-
-// Consider two octaves, starting from the reference frequency.
+	/* Number of harmonics we search over. */
 #define NUM_OCTAVES 2
-
-// Search the two bins on either side of a frequency for a maximum.
+	/*
+	 * Number of octaves we search over, starting with the
+	 * reference frequency.
+	 */
 #define NUM_BINS_TO_SEARCH 2
+	/*
+	 * Number of bins to search on either side of a frequency for
+	 * a maximum.
+	 */
 
-
-// Collect 8192 audio samples per frame.
-#define FRAME_SIZE 8192
-
-// Sample at 16000 samples per second.
+#define FRAME_SIZE 4096
+	/* Number of samples to store at once. */
 #define FS 16000
+	/* Sampling rate. */
 
-
-// Order for the low-pass filter.
 #define ORDER 6
-
-// Gain for the low-pass filter.
+	/* Order for the low-pass filter. */
 #define GAIN 4.802595226e+00
-
+	/* Gain for the low-pass filter. */
 
 #define PI 3.14159265358979323
 
 
-// Initialize the frequencies to look at and the chromagram vector.
 void initialize();
+	/*
+	 * Initializes the chromagram vector and the frequencies to look
+	 * at.
+	 */
 
-// Downsample the input frame by a factor of four.
 void downsample_frame(int16_t* input_audio_frame);
+	/* Downsamples the input frame by a factor of four. */
 
-// Downsample and calculate the chromagram for the input audio frame.
 void process_audio_frame(int16_t* input_audio_frame);
+	/*
+	 * Downsamples and calculates the chromagram for the input audio
+	 * frame.
+	 */
 
-void make_hamming_window();
-
-// Low-pass Butterworth filter applied to input audio.
-void low_pass(int16_t* fft, int float_size);
-
-/*
- * Calculate the square root of the magnitude of the FFT of the
- * audio signal.
- */
 void calculate_magnitude_spectrum();
+	/*
+	 * Calculates the square root of the magnitude of the FFT of the
+	 * audio signal.
+	 */
 
 void calculate_chromagram();
+	/* Calculates the chromagram. */
 
-// Return the chromagram as a float vector.
 float* get_chromagram(int16_t* input_audio_frame);
+	/* Returns the chromagram as a float vector. */
 
-// Returns 1 if the chromagram has been calculated, otherwise returns 0.
 int is_ready();
+	/*
+	 * Returns 1 if the chromagram has been calculated, otherwise
+	 * returns 0.
+	 */
+
+void make_hamming_window();
+	/* Generates the Hamming window. */
+
+void low_pass(int16_t* fft, int float_size);
+	/* Low-pass Butterworth filter applied to input audio. */
+
 
 extern float* downsampled_input_audio_frame;
 
@@ -77,15 +86,14 @@ extern float* window;
 extern float* magnitude_spectrum;
 extern float* chromagram;
 
-// The 12 frequencies we consider.
 extern float note_frequencies[12];
 
-// Holds FFT values.
 extern float y_real_sp[BUFFER_SIZE];
 extern float y_imag_sp[BUFFER_SIZE];
-extern float x_sp [2 * BUFFER_SIZE];
+extern float x_sp[2 * BUFFER_SIZE];
 
 extern int downsampled_audio_frame_size;
+
 extern int chroma_ready;
 
 #endif
