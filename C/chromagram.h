@@ -10,10 +10,19 @@
 #include "L138_LCDK_switch_led.h"
 #include "evmomapl138_gpio.h"
 
+
+#define FRAME_SIZE 4096
+	/* Number of samples to store at once. */
+#define FS 16000
+	/* Sampling rate. */
+
 #define REFERENCE_FREQUENCY 130.8127826
 	/* Reference frequency corresponding to the lowest octave. */
 #define BUFFER_SIZE 1024
-	/* Size for FFT and chromagram calculations. */
+	/*
+	 * Size for FFT and chromagram calculations. Must be one-fourth
+	 * of FRAME_SIZE.
+	 */
 #define NUM_HARMONICS 2
 	/* Number of harmonics we search over. */
 #define NUM_OCTAVES 2
@@ -26,11 +35,6 @@
 	 * Number of bins to search on either side of a frequency for
 	 * a maximum.
 	 */
-
-#define FRAME_SIZE 4096
-	/* Number of samples to store at once. */
-#define FS 16000
-	/* Sampling rate. */
 
 #define ORDER 6
 	/* Order for the low-pass filter. */

@@ -15,6 +15,7 @@
 	 */
 
 #define RUNTIME 50
+	/* The number of loops we run the program for. */
 
 int16_t audio_frame[FRAME_SIZE];
 int16_t metronome[FRAME_SIZE + THROWAWAY];
@@ -100,7 +101,7 @@ int main(void)
 		if (counter == FRAME_SIZE + THROWAWAY && iterations < RUNTIME)
 		{
 			/*
-			 * Once a frame of audio has been filled, we low-pass it,
+			 * Once a frame of audio has been filled, we low-pass filter it,
 			 * generate the chromagram, and find the chord. We print the
 			 * chord to the console and store the chord in the
 			 * chord_sequence array. Then we reset the counter and
@@ -162,6 +163,7 @@ int main(void)
 			printf("Done :)\n");
 		}
 		else
-		{}
+		{
+		}
 	}
 }

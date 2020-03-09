@@ -309,7 +309,7 @@ void low_pass(int16_t* signal, int float_size)
 {
 	/*
 	 * Low-pass Butterworth filter applied to input audio.
-	 * Generated from www-users.cs.york.ac.uk/~fisher/mkfilter,
+	 * Generated from www-users.cs.york.ac.uk/~fisher/mkfilter
 	 * which uses the bilinear transform to generate a filter.
 	 *
 	 * Cutoff frequency at 6000 Hz.
