@@ -3,6 +3,14 @@ desktop.ini
 *.zip
 *.gdoc
 *.vscode
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
+*.out
 Useful*Papers/
 Music*Samples/
 CCS/
