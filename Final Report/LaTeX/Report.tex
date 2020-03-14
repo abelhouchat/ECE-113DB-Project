@@ -63,16 +63,20 @@ This required us to perform memory management and pay close attention to our cod
 \subsection{Plan and Implementation}
 
 \subsection{Standard}
-The most common features used in pattern matching and HMM chord recognition systems are chroma features \cite{cho_chroma}.
-First introduced into chord recognition by Fujishima, basic chroma features are calculated by summing the DFT of the music signal over certain frequency bins \cite{fujishima}.
-Each chroma vector has twelve elements corresponding to the twelve pitch classes that the frequency bins are mapped to, and the distribution of energy across the twelve pitch classes determines which chord it corresponds to \cite{jiang}.
-Because of how ubiquitous chroma features are in chord recognition, we chose to use them as our features for chord recognition.
+The most common features used in automatic chord recognition systems are chroma features \cite{cho_chroma}.
+First introduced by Fujishima, chroma features represent the pitch content of a music sample.
+Basic chroma features are calculated by summing the magnitude of the DFT of the music signal over certain frequency bins \cite{fujishima}.
+These bins correspond roughly to the energy in different pitch classes, such as C or G\#.
+Each chroma vector has twelve elements, one for each note in an octave, corresponding to the twelve pitch classes that the frequency bins are mapped to, and the distribution of energy across the twelve pitch classes is used to determine which chord was played in the music sample \cite{jiang}.
+Because of how ubiquitous and useful chroma features are in chord recognition, we chose to use them as our features for chord recognition.
 
 To actually determine what chord the chroma features corresponds to, we use pattern matching, which is one of the most common methods of determining chords \cite{cho_chroma}.
 In particular, we use binary pattern matching, where each chord has a corresponding template which is a specific arrangement of zeros and ones.
-The tones present in the ideal chord are one, while all the other tones are zero \cite{cho_chroma}.
+Since the chroma vector represents the pitch content of a music sample, we can create ideal template vectors that represent what the pitch content of a pure chord would look like.
+For example, the template vector for the major C chord would be $\mathbf{v}_C = (1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0)$, where the ones are where a major C should have pitch contributions and the zeros are pitches that should not be present in a major C.
+In general, the tones that should be present in the ideal chord are one, while all the other tones are zero \cite{cho_chroma}.
 To find the matching template, many implementations look for the minimum Euclidean distance between a template and the chroma feature \cite{stark}, but other approaches such as finding the minimum angle between the two are also used \cite{jiang}.
-We chose to go with this latter approach as it gave us slightly better accuracy.
+We chose to go with this latter approach as it gave us slightly better accuracy when testing.
 
 \subsection{Theory}
 The key mathematical elements of our chord recognition system are the low-pass filter, the chroma features, and pattern matching.
@@ -101,31 +105,44 @@ The frequency response is given in \Cref{fig:frequency_response}.
     \centering
     \includegraphics[width=\linewidth]{../Figures/frequency_response}
     \caption{Frequency response of the low-pass filter used in our chord recognition system.
-    Courtesy of Tony Fisher at \url{https://www-users.cs.york.ac.uk/~fisher/mkfilter/}.}
+    Generated from Tony Fisher's website at \url{https://www-users.cs.york.ac.uk/~fisher/mkfilter/}.}
     \label{fig:frequency_response}
 \end{figure}
 
-Chroma features are features that describe the pitch content of a sample of music \cite{jiang}. A chroma feature has 12 elements, one for each note in an octave from C through B. The value of one of these elements corresponds to the energy present in the music signal coming from that pitch. Because of this, it is straightforward to determine the chords in a piece of music by analyzing the chroma features.
+Chroma features are features that describe the pitch content of a sample of music \cite{jiang}.
+A chroma feature has 12 elements, one for each note in an octave from C through B.
+The value of one of these elements corresponds to the energy present in the music signal coming from that pitch.
+Because of this, it is straightforward to determine the chords in a piece of music by analyzing the chroma features.
 
-The algorithm we use to generate chroma features comes from Stark and Plumbley’s paper \cite{stark}. The first step is to apply a Hamming window $w(n)$ to the signal $x(n)$, given by
+The algorithm we use to generate chroma features comes from Stark and Plumbley’s paper \cite{stark}.
+The first step is to apply a Hamming window $w(n)$ to the signal $x(n)$, given by
 \begin{equation}
     w(n) = 0.54 - 0.46\cos\!\left(\frac{2\pi n}{N - 1}\right)
     \label{eq:window}
 \end{equation}
-where $N$ is the size of the signal. Once we have the windowed signal $x_w(n) = x(n)w(n)$ we take the DFT,
+where $N$ is the size of the signal.
+Once we have the windowed signal $x_w(n) = x(n)w(n)$ we take the DFT,
 \begin{equation}
     X(k) = \sum_{n = 0}^{N - 1}x_w(n)e^{-\frac{i2\pi kn}{N}}
     \label{eq:dft}
 \end{equation}
 
-From here, the original chroma feature algorithm would sum the squared magnitudes of the DFT over certain frequency bins to get the chroma values \cite{fujishima}. However, this may include unwanted energy like noise in the chroma features. To avoid this, Stark and Plumbley only consider the maximum amplitude in a given frequency bin, thus only taking into account the energy in the note we want.
+From here, the original chroma feature algorithm would sum the squared magnitudes of the DFT over certain frequency bins to get the chroma values \cite{fujishima}.
+However, this may include unwanted energy like noise in the chroma features.
+To avoid this, Stark and Plumbley only consider the maximum amplitude in a given frequency bin, thus only taking into account the energy in the note we want.
 
-First, we determine the frequencies to search over. We start with $f_{C3} = 130.81$ Hz, which is lower C. Then for $n = 0, 1, \ldots, 11$, we calculate
+First, we determine the frequencies to search over.
+We start with $f_{C3} = 130.81$ Hz, which is lower C.
+Then for $n = 0, 1, \ldots, 11$, we calculate
 \begin{equation}
     f(n) = f_{C3}2^{(n / 12)}
     \label{eq:freq}
 \end{equation}
-which gives the 12 notes in an octave. We then do this for two octaves so we get all 24 notes in the two octaves from $f_{C3} = 130.81$ Hz to $f_{C5} = 523.25$ Hz. For each of the 12 elements of the chroma feature, we search through two octaves and within each octave search through two harmonics. This is because Stark and Plumbley have found that most instruments of interest use the lower register within this frequency range and to account for inharmonicities in real instruments \cite{stark}. The chroma feature is then given by
+which gives the 12 notes in an octave.
+We then do this for two octaves so we get all 24 notes in the two octaves from $f_{C3} = 130.81$ Hz to $f_{C5} = 523.25$ Hz.
+For each of the 12 elements of the chroma feature, we search through two octaves and within each octave search through two harmonics.
+This is because Stark and Plumbley have found that most instruments of interest use the lower register within this frequency range and to account for inharmonicities in real instruments \cite{stark}.
+The chroma feature is then given by
 \begin{equation}
     c_n = \frac{1}{h}\sum_{\phi = 1}^2\sum_{h = 1}^2 \max_{k_0^{(n, \phi, h)} \leq k \leq k_1^{(n, \phi, h)}} X(k)
     \label{eq:chroma}
@@ -143,7 +160,11 @@ where $r = 2$ is the number of bins to search over for each harmonic and
 \end{equation*}
 where $f_s$ is the sampling rate.
 
-Lastly, we use pattern matching to match the chroma feature to the most fitting chord. Pattern matching involves the use of template vectors for each chord, such as $\mathbf{v}_C = (1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0)$ for major C \cite{jiang}. We try to match the chroma vector to the closest template vector and from that get the corresponding chord. One simple method is to just find the Euclidean distance $||\mathbf{c} - \mathbf{v}||$ between the chroma vector and each of the template vectors and see which is the smallest. Another approach, which we use,  is to find the cosine similarity between two vectors, defined as 
+Lastly, we use pattern matching to match the chroma feature to the most fitting chord.
+Pattern matching involves the use of template vectors for each chord, such as $\mathbf{v}_C = (1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0)$ for major C \cite{jiang}.
+We try to match the chroma vector to the closest template vector and from that get the corresponding chord.
+One simple method is to just find the Euclidean distance $||\mathbf{c} - \mathbf{v}||$ between the chroma vector and each of the template vectors and see which is the smallest.
+Another approach, which we use,  is to find the cosine similarity between two vectors, defined as 
 \begin{equation}
     \text{cossim}(\mathbf{c}, \mathbf{v}) = \frac{\langle\mathbf{c}, \mathbf{v}\rangle}{||\mathbf{c}|| \cdot ||\mathbf{v}||}
     \label{eq:cossim}
@@ -157,9 +178,43 @@ and choose the template vector with the maximum cosine similarity \cite{jiang}.
 \subsubsection{How the System was Built}
 
 \subsubsection{How to Use the System}
+To use the chord recognition system, first plug a microphone into the LCDK microphone input port and plug speakers into the LCDK output port.
+If you want, you can change the sampling rate, frame size, buffer size, and how long the program runs for.
+The first three parameters are defined in \texttt{chromagram.h}: \texttt{FS} is sampling rate, \texttt{FRAME\_SIZE} is frame size, and \texttt{BUFFER\_SIZE} is buffer size which is fed into the FFT.
+Note that \texttt{FRAME\_SIZE} must be a power of 2 and \texttt{BUFFER\_SIZE} must be one-fourth of \texttt{FRAME\_SIZE} due to the downsampling.
+We choose to define them separately just to save that little bit of processing power required to perform the division by four.
+The program length is implicitly defined by \texttt{ITERATIONS} in \texttt{main.c}.
+Strictly speaking, it controls how many loops the program will run for, which is also the number of chords that will be processed.
+
+Once all the parameters are set to your liking, run the program through Code Composer Studio and you will hear the “metronome” start to play through the speakers.
+The metronome is really just a square wave that plays on beat to when the recording starts.
+Once you hear the metronome, you can begin playing your audio samples into the microphone.
+For best results, play the chords in time with the metronome, because otherwise the chord will be out of sync with the recording and the performance of the chord recognition system will be poor.
+
+Once you start the program, the system will write the chords it has recognized to console.
+The most recent message will be the chord that was just played and recorded.
+Once the program has run through all iterations, it will print ``Done :)'' at which point you will find a file named \texttt{chord\_sequence.txt} in the Debug folder.
+This prints out all the chords that were played during recording along with the times that the chord was played.
 
 \section{Results}
+
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width = \linewidth]{../Figures/chord_sequence_in_order}
+    \caption{Graph of the performance of the system for a naturally ordered chord progression.}
+    \label{fig:in_order}
+\end{figure}
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width = \linewidth]{../Figures/chord_sequence_random}
+    \caption{Graph of the performance of the system for a randomly ordered chord progression.}
+    \label{fig:random}
+\end{figure}
+
 \subsection{Description}
+We graphed the performance of our chord recognition system over two different chord sequences, one ordered naturally in \Cref{fig:in_order} and one ordered randomly in \Cref{fig:random}.
+We follow the graph convention described by \cite{harte}, where the 24 chords from C major to B minor are numbered 0 to 23, with no chord assigned 24, and we plot the number of each chord over time.
+
 \subsection{Discussion}
 
 \bibliographystyle{IEEEtran}
