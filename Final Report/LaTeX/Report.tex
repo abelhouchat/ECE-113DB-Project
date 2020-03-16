@@ -1,9 +1,15 @@
 \documentclass[journal]{IEEEtran}
 \usepackage{cite}
 \usepackage{amsmath}
+\usepackage{listings}
+\usepackage{courier}
+\usepackage{cuted}
 \usepackage{graphicx}
 \usepackage[hidelinks]{hyperref}
+\usepackage{tabularx}
 \usepackage{cleveref}
+
+\lstset{basicstyle = \ttfamily, breaklines = true}
 
 \begin{document}
 
@@ -15,7 +21,7 @@
     Blahdy blah.
 \end{abstract}
 \begin{IEEEkeywords}
-    Blah, blahdy, bloo
+    chord, octave, chord recognition, chroma features, pitch class profile, pattern matching, cosine similarity, filter, downsampling, FFT, LCDK
 \end{IEEEkeywords}
 
 \section{Introduction}
@@ -40,6 +46,21 @@ Each of these approaches has its pros and cons, and which one is most fitting de
 
 
 \subsection{Global Constraints}
+The main constraints dealt with are the hardware limitations of the TI LCDK platform, which is an all-in-one microcontroller (MCU) with digital signal processor (DSP) and ARM processor (CPU), and other common peripheral components \cite{lcdk}.
+The entire system is built around the operation of the LCDK unit.
+The two major limitations are the memory size and processor speed.
+The memory specifications are 128 MB SDRAM and 128 MB NAND Flash \cite{lcdk}.
+The processor speed is listed as 456 MHz for both the DSP and CPU \cite{lcdk}.
+
+These hardware constraints pose implications on the software needed to build the system.
+The LCDK board is programmed using the TI Code Composer Studio (CCS) IDE in the C programming language \cite{lcdk}.
+The memory constraints imply that the program’s memory allocation must be limited to prevent data overflow.
+To that end, memory is dynamically allocated when needed and freed immediately after use with the in-built C \texttt{malloc()} and \texttt{free()} functions.
+Since this is a real-time system, the processor speed places a constraint on the execution time of the program.
+The system leverages the interrupt service routine (ISR) to take audio samples at the sample rate equal to 16000 Hz.
+The interrupt loop in the code must have an execution time less than 62.5 microseconds in order to guarantee that samples are taken properly.
+Functions that take a long time to complete, such as \texttt{fprintf()}, are used only at the end of the program when the real-time component is complete.
+
 
 \section{Motivation}
 One shortcoming of many modern chord recognition systems is the vast amount of data required to train these systems \cite{pauwels}.
@@ -57,10 +78,73 @@ Chord recognition requires many DSP techniques, including sampling a signal, pro
 This project would give us valuable experience with all the important elements of DSP with the added constraint of performing it in real-time.
 This required us to perform memory management and pay close attention to our code to make sure all functions were optimized, which are valuable skills for embedded software development.
 
+
 \section{Approach}
 \subsection{Team Organization}
+The team for the project consisted of two people, and the majority of the work was done together in the lab during lab time.
+Having two people worked well, because we could split up the work into its natural software and hardware components.
+A typical workflow would have one person controlling the software of the LCDK with CCS and the other monitoring the interfaces, such as microphone and speakers, to the LCDK.
+The software person would write code and run it on the LCDK.
+The hardware person would be responsible for testing the program by giving the microphone input through recorded or live chord sequences.
+Being able to incrementally test units in this fashion enabled us to quickly develop and debug our code.
+We were generally successful at managing our time, utilizing the full extent of our given lab time and not needing to come in after hours.
+With proper time management and team organization, we were able to accomplish our main goals.
+
 
 \subsection{Plan and Implementation}
+Our initial plan was as follows:
+
+\subsubsection*{Weeks 1--2}
+Find and format data.
+Find a data set of various guitar chords.
+Format data into frames.
+
+\subsubsection*{Weeks 3--4}
+Generate chroma features.
+Test feature extraction in MATLAB.
+Implement final version of feature extraction on LCDK.
+
+\subsubsection*{Weeks 5--7}
+Perform chord recognition on chroma features.
+Test different classification algorithms (template, HMM, linear classifier, etc.) in MATLAB and find the best (most accurate) one.
+Implement final classification algorithm on LCDK.
+
+\subsubsection*{Weeks 8--9}
+Test chord recognition (all on LCDK).
+Test on data set.
+Test on live performance.
+Write output to console.
+
+\subsubsection*{Weeks 9--10}
+Write chord sequences to a file.
+Write a plain text file for testing.
+Write to standard format (guitar tabs, sheet music, etc.).
+
+Our actual implementation went as follows:
+
+\subsubsection*{Weeks 1--2}
+We found several potential data sets from which samples were taken.
+Then, we were able to construct a data set with several audio samples for each of the 24 chords that were implemented.
+
+\subsubsection*{Weeks 3--4}
+Instead of MATLAB, we used Python to prototype chroma feature extraction.
+Python had an up-to-date library for chroma processing, and was easier to use than MATLAB \cite{librosa}.
+Referring to this library and another paper, we were able to implement feature extraction on the LCDK \cite{librosa, stark}.
+
+\subsubsection*{Weeks 5--7}
+Instead of beginning with Python or MATLAB, we started developing on the LCDK to save time.
+Our first attempt was to adapt a template-matching algorithm, which ended up working very well \cite{stark}.
+It was the simplest to implement and had the lowest computational complexity.
+We ended up not having to attempt any of the other classifiers, which included linear classifiers, HMM, and SVM.
+
+\subsubsection*{Weeks 8--9}
+We tested chord recognition by playing sequences of guitar chords and recording the classification accuracy.
+We were pleased to find that when played live, the program was able to classify all of the chords.
+
+\subsubsection*{Weeks 9--10}
+We were able to write the sequences to a text file by assigning timestamps for the duration that a chord was played.
+We did not get to our stretch goal, which was to write the sequence to a standard format.
+
 
 \subsection{Standard}
 The most common features used in automatic chord recognition systems are chroma features \cite{cho_chroma}.
@@ -77,6 +161,7 @@ For example, the template vector for the major C chord would be $\mathbf{v}_C = 
 In general, the tones that should be present in the ideal chord are one, while all the other tones are zero \cite{cho_chroma}.
 To find the matching template, many implementations look for the minimum Euclidean distance between a template and the chroma feature \cite{stark}, but other approaches such as finding the minimum angle between the two are also used \cite{jiang}.
 We chose to go with this latter approach as it gave us slightly better accuracy when testing.
+
 
 \subsection{Theory}
 The key mathematical elements of our chord recognition system are the low-pass filter, the chroma features, and pattern matching.
@@ -105,6 +190,7 @@ The frequency response is given in \Cref{fig:frequency_response}.
     \centering
     \includegraphics[width=\linewidth]{../Figures/frequency_response}
     \caption{Frequency response of the low-pass filter used in our chord recognition system.
+    The red curve is the normalized magnitude of the frequency response and the blue curve is the phase.
     Generated from Tony Fisher's website at \url{https://www-users.cs.york.ac.uk/~fisher/mkfilter/}.}
     \label{fig:frequency_response}
 \end{figure}
@@ -132,14 +218,14 @@ However, this may include unwanted energy like noise in the chroma features.
 To avoid this, Stark and Plumbley only consider the maximum amplitude in a given frequency bin, thus only taking into account the energy in the note we want.
 
 First, we determine the frequencies to search over.
-We start with $f_{C3} = 130.81$ Hz, which is lower C.
+We start with $f_{\text{C}3} = 130.81$ Hz, which is lower C.
 Then for $n = 0, 1, \ldots, 11$, we calculate
 \begin{equation}
-    f(n) = f_{C3}2^{(n / 12)}
+    f(n) = f_{\text{C}3}2^{(n / 12)}
     \label{eq:freq}
 \end{equation}
 which gives the 12 notes in an octave.
-We then do this for two octaves so we get all 24 notes in the two octaves from $f_{C3} = 130.81$ Hz to $f_{C5} = 523.25$ Hz.
+We then do this for two octaves so we get all 24 notes in the two octaves from $f_{\text{C}3} = 130.81$ Hz to $f_{\text{C}5} = 523.25$ Hz.
 For each of the 12 elements of the chroma feature, we search through two octaves and within each octave search through two harmonics.
 This is because Stark and Plumbley have found that most instruments of interest use the lower register within this frequency range and to account for inharmonicities in real instruments \cite{stark}.
 The chroma feature is then given by
@@ -161,7 +247,7 @@ where $r = 2$ is the number of bins to search over for each harmonic and
 where $f_s$ is the sampling rate.
 
 Lastly, we use pattern matching to match the chroma feature to the most fitting chord.
-Pattern matching involves the use of template vectors for each chord, such as $\mathbf{v}_C = (1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0)$ for major C \cite{jiang}.
+Pattern matching involves the use of template vectors for each chord, such as $\mathbf{v}_{\text{C}} = (1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0)$ for major C \cite{jiang}.
 We try to match the chroma vector to the closest template vector and from that get the corresponding chord.
 One simple method is to just find the Euclidean distance $||\mathbf{c} - \mathbf{v}||$ between the chroma vector and each of the template vectors and see which is the smallest.
 Another approach, which we use,  is to find the cosine similarity between two vectors, defined as 
@@ -171,11 +257,38 @@ Another approach, which we use,  is to find the cosine similarity between two ve
 \end{equation}
 and choose the template vector with the maximum cosine similarity \cite{jiang}.
 
+
 \subsection{Software/Hardware}
+There were two main types of software used for the project: the LibROSA Python package for prototyping, and Code Composer Studio (CCS) C software for implementation.
+The LibROSA Python package was used in the early stages of development for chroma feature extraction.
+The main motivation was to familiarize ourselves with the chroma structure and the type of inputs/outputs that our program would need.
+The LibROSA package also provided functions to visualize the contents of a chroma feature, which helped to further understand the nature of the audio transformation.
+After using this package, we were able to better organize our C code for the LCDK, keeping in mind its real-time constraints.
+
+The majority of the software was done in Code Composer Studio in order to program the LCDK.
+We were familiar with CCS since we used it extensively in prior projects.
+The main challenge was to adapt the chroma feature extraction and chord recognition into the C programming language, which requires more low-level knowledge than Python.
+Fortunately, with prior experience in C/C++ and relative simplicity of the algorithms used, we were able to quickly implement our program.
+An example code snippet from the chroma feature extraction, containing the \texttt{process\_audio\_frame()} function, found in \texttt{chromagram.h}, is provided in \Cref{code:audio} at the end of this report.
+
+As aforementioned, the LCDK platform is the embedded system on which the compiled C program operates.
+The main subsystems used were the CPU and DSP, memory, and audio codec.
+The audio codec was easy to use, since the manufacturer provided the encapsulated functions needed to sample and save audio information to the C built-in data types.
+Encapsulation enabled us to use the hardware without needing to know many of its low-level details and instead use our knowledge of the software.
+
 
 \subsection{Operation}
 
+
 \subsubsection{How the System was Built}
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width = \linewidth]{../Figures/block_diagram}
+    \caption{Block diagram of the system.
+    There are three main steps: chroma feature extraction, chord recognition, and chord sequence output.}
+    \label{fig:block}
+\end{figure}
+
 
 \subsubsection{How to Use the System}
 To use the chord recognition system, first plug a microphone into the LCDK microphone input port and plug speakers into the LCDK output port.
@@ -196,6 +309,7 @@ The most recent message will be the chord that was just played and recorded.
 Once the program has run through all iterations, it will print ``Done :)'' at which point you will find a file named \texttt{chord\_sequence.txt} in the Debug folder.
 This prints out all the chords that were played during recording along with the times that the chord was played.
 
+
 \section{Results}
 
 \begin{figure}[!t]
@@ -211,13 +325,49 @@ This prints out all the chords that were played during recording along with the 
     \label{fig:random}
 \end{figure}
 
+
 \subsection{Description}
 We graphed the performance of our chord recognition system over two different chord sequences, one ordered naturally in \Cref{fig:in_order} and one ordered randomly in \Cref{fig:random}.
 We follow the graph convention described by \cite{harte}, where the 24 chords from C major to B minor are numbered 0 to 23, with no chord assigned 24, and we plot the number of each chord over time.
 
+
 \subsection{Discussion}
+
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}
+
+
+\onecolumn
+\begin{lstlisting}[language = C, frame = single, caption = {An example code snippet from the chroma feature extraction containing the \texttt{process\_audio\_frame()} function.
+This function is located in the \texttt{chromagram.c} file.}, captionpos = b, label = code:audio]
+void process_audio_frame(int16_t* input_audio_frame)
+{
+    /*
+     * Processes the audio input and generates the chromagram.
+     *
+     * First downsamples the input audio signal and calculates 
+     * the magnitude of the FFT, then generates the chromagram.
+     */
+
+    chroma_ready = 0;
+
+    downsampled_audio_frame_size = FRAME_SIZE / 4;
+    downsampled_input_audio_frame = (float*)
+    malloc(downsampled_audio_frame_size * sizeof(float));
+    downsample_frame(input_audio_frame);
+
+    int i;
+    for (i = 0; i < BUFFER_SIZE; i++)
+    {
+        x_sp[2 * i] = downsampled_input_audio_frame[i];
+        x_sp[2 * i + 1] = 0;
+    }
+
+    free(downsampled_input_audio_frame);
+    calculate_chromagram();
+}
+\end{lstlisting}
+
 
 \end{document}
