@@ -18,7 +18,7 @@
 \maketitle
 
 \begin{abstract}
-    This project describes the development of a real-time chord recognition system, which was built using the TI LCDK embedded chip and Code Composer Studio IDE \cite{lcdk, ccs}.
+    This report describes the development of a real-time chord recognition system, which was built using the TI LCDK embedded chip \cite{lcdk} and Code Composer Studio IDE \cite{ccs}.
     Prior chord recognition systems have been developed \cite{stark, cho, harte, lee, mauch_thesis, mauch_simultaneous, jiang, pauwels, fujishima}, but our implementation is specifically intended for use by a musician during the real-time composition process.
     The subsystems are, in order: recording audio of live chord playing, extracting chroma features, performing chord recognition, and providing output to the user.
     The output is both in real-time to the computer’s console and to an annotated text file after the recording is complete.
@@ -30,12 +30,12 @@
 
 \section{Introduction}
 \subsection{History with References}
-Automatic chord recognition (ACR) is the process of determining what chord is being played given an audio sample by labelling the audio sample over time with the appropriate chord \cite{stark}.
+Automatic chord recognition (ACR) is the process of labelling the audio sample with the chords it plays over time \cite{stark}.
 A chord is defined as two or more notes being played at the same time or close together \cite{cho}.
 Chord recognition has many applications, such as music segmentation or determining the similarity between two music samples \cite{lee}, but one of the most attractive applications is automatic transcription.
-Manual transcription can be tedious and difficult, and automatic chord recognition systems can help musicians work more quickly and more accurately \cite{mauch_thesis}.
+Manual music transcription can be tedious and difficult, and automatic chord recognition systems can help musicians work more quickly and more accurately \cite{mauch_thesis}.
 Because of its wide range of applications, chord recognition has been the subject of much research in the past few decades.
-These researchers try to improve both the number of chords their systems can recognize and its accuracy through novel methods and approaches \cite{pauwels}.
+Most of the focus has been on improving both the number of chords the system can recognize and its accuracy through novel methods and approaches \cite{pauwels}.
 
 One of the first ACR systems was developed by Takuya Fujishima in 1999 \cite{pauwels}.
 He used the discrete Fourier transform (DFT) of a music sample to generate a pitch class profile, also known as chroma feature or chroma vector, which encodes the harmonic information of the sample over twelve pitch classes.
@@ -51,7 +51,7 @@ Each of these approaches has its pros and cons, and which one is most fitting de
 
 
 \subsection{Global Constraints}
-The main constraints dealt with are the hardware limitations of the TI LCDK platform, which is an all-in-one microcontroller (MCU) with digital signal processor (DSP) and ARM processor (CPU), and other common peripheral components \cite{lcdk}.
+The main constraints we dealt with were the hardware limitations of the TI LCDK platform, which is an all-in-one microcontroller (MCU) with digital signal processor (DSP) and ARM processor (CPU), and of other common peripheral components \cite{lcdk}.
 The entire system is built around the operation of the LCDK unit.
 The two major limitations are the memory size and processor speed.
 The memory specifications are 128 MB SDRAM and 128 MB NAND Flash \cite{lcdk}.
@@ -78,7 +78,7 @@ Another shortcoming of HMMs and neural networks is they are often more computati
 They work well when a music sample has been prerecorded and is later fed into the system, but they are not fast enough to perform chord recognition and transcription in real-time.
 We wanted to make a chord recognition system that would record musical chords and transcribe them in real-time, so we needed to approach our system differently from most modern systems.
 
-Lastly, as mentioned earlier, we chose this project to learn more about real-time digital signal processing (DSP) and to gain more experiences with different applications of it.
+Lastly, as mentioned earlier, we chose this project to learn more about real-time digital signal processing (DSP) and to gain more experience with different applications of it.
 Chord recognition requires many DSP techniques, including sampling a signal, processing it to extract features, performing some evaluation based on those features, and then returning the results of that evaluation to the user \cite{fujishima}.
 This project would give us valuable experience with all the important elements of DSP with the added constraint of performing it in real-time.
 This required us to perform diligent memory management and pay close attention to our code to make sure all functions were optimized, which are valuable skills for embedded software development.
@@ -98,7 +98,7 @@ With proper time management and team organization, we were able to accomplish ou
 
 \subsection{Plan and Implementation}
 Our plan for implementing the real-time chord recognition was to separate the task into major chunks.
-We would prototype the system in a higher-level language as a proof of concept and then implement the system in C for the LCDK.
+We would prototype the system in a high-level language as a proof of concept and then implement the system in C for the LCDK.
 Our initial plan for this project is outlined in \Cref{tab:plan}, while the actual timeline of our implementation is outlined in \Cref{tab:implementation}.
 
 \def\arraystretch{1.5}
@@ -144,7 +144,7 @@ Our initial plan for this project is outlined in \Cref{tab:plan}, while the actu
 
 \begin{table}[ht]
     \centering
-    \caption{Outline of the timeline of our implementation of the chord recognition system.}
+    \caption{Timeline of our implementation of the chord recognition system.}
     \begin{tabularx}{0.95\linewidth}{|>{\hsize=0.4\hsize}X|>{\hsize=1.6\hsize}X|}
         \hline
             \textit{Weeks 1--2}
@@ -179,44 +179,34 @@ Our initial plan for this project is outlined in \Cref{tab:plan}, while the actu
     \label{tab:implementation}
 \end{table}
 
-Our actual implementation followed our plan well except for two major differences.
-First, we used Python with the LibROSA to build our prototype instead of MATLAB.
-As explained in \Cref{tab:implementation}, LibROSA is a more modern library for audio processing that is still maintained as opposed to the deprecated MATLAB libraries we found.
+Our actual implementation followed our plan well except for three major differences.
+First, we used Python with the LibROSA library to build our prototype instead of MATLAB.
+As explained in \Cref{tab:implementation}, LibROSA is a more modern library for audio processing that is actively maintained as opposed to the deprecated MATLAB libraries we found.
 It also had better documentation than the MATLAB libraries which helped us understand the principles and operations behind what we were doing.
 
 Second, we decided to prototype the whole system in Python first before doing anything on the LCDK instead of taking a more piecemeal approach as we initially planned.
-This allowed us to gain a better understanding of how the system would work as a whole, such as graphing the chroma features and seeing how similar chroma representations would need to be accounted for during template matching.
-It also let us debug fundamental issues on Python before we ported it over to the LCDK.
+This allowed us to gain a better understanding of how the system would work as a whole by examining and experimenting with all parts of the prototyped system.
+For example, we were able to graph the chroma features and determine how similar chroma representations between major and minor chords would need to be accounted for during template matching.
+This approach also let us debug fundamental issues on Python before we ported it over to the LCDK.
 Debugging C code on the embedded system would have been much more annoying than debugging Python on a laptop, so this change in our approach gave us a smoother transition into working on the LCDK.
 
-Lastly, we did not meet our stretch goal of outputting the chord sequences into a standard format like sheet music or guitar tabs that could be loaded into a music notation program.
+Lastly, we did not meet our stretch goal of outputting the chord sequences into a standard format, like sheet music or guitar tabs, that could be imported into a music notation program.
 When we explored different file formats, we discovered that we would need a lot of additional information that our system did not keep track of to output our chord sequences in these formats, such as clef or time signature.
 Therefore it would have been much more work to reach our stretch goal and may have fundamentally changed the objective of this project if we were to pursue it.
 For now, it is left as potential future work.
 
 
 \subsection{Standard}
-The most common features used in automatic chord recognition systems to extract chord information from a music sample are chroma features \cite{cho_chroma}.
+The most common features used in automatic chord recognition systems to extract harmonic information from a music sample are chroma features \cite{cho_chroma}.
 First introduced into chord recognition by Fujishima \cite{fujishima}, chroma features represent the pitch content of a music sample.
 Each chroma vector has twelve elements, one for each note in the standard Western octave from C to B, and the energy in each element determines what the pitch composition of the chord is and thus determines what the chord is \cite{jiang}.
 Basic chroma features are calculated by summing the magnitude of the DFT of the music signal over certain frequency bins \cite{fujishima}.
-These bins correspond roughly to the energy in the different pitch classes.
+These bins correspond to the energy in the different pitch classes.
 Because of how ubiquitous and useful chroma features are in chord recognition, we chose to use them as our features for chord recognition.
 
 To actually determine what chord the chroma features corresponds to, we use pattern matching, which is one of the most common methods of determining chords \cite{cho_chroma}.
 Specifically, we use binary pattern matching, where each chord has a corresponding template which is a specific arrangement of zeros and ones.
-Since the chroma vector represents the pitch content of a music sample, we can create ideal template vectors that represent what the pitch content of a pure chord would look like.
-For example, the major C has pitch contributions from the C, E, and G pitch classes as we can see in \Cref{fig:chroma}.
-\begin{figure}[t]
-    \centering
-    \includegraphics[width = \linewidth]{../Figures/chromagram_c_major}
-    \caption{Chromagram for the C major chord generated using LibROSA.
-    Note that the distortions and noise are due to the chord being played imperfectly on the guitar and due to silence at the beginning before the chord is played and at the end when the chord trails off.}
-    \label{fig:chroma}
-\end{figure}
-Therefore, the template vector for the major C chord would be $\mathbf{v}_{\text{C}} = (1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0)$, with ones at the C, E, and G pitch classes and zeros everywhere else.
-
-In general, the tones that should be present in the ideal chord are one, while all the other tones not present are zero \cite{cho_chroma}.
+These template vectors represent an ideal version of the chord, representing what the pitch content of a pure chord would look like.
 To find the matching template, many implementations look for the minimum Euclidean distance between a template and the chroma feature \cite{stark}, but other approaches exist such as finding the template with the minimum angle to the chroma vector \cite{jiang}.
 We chose to go with this latter approach as it gave us slightly better accuracy when testing.
 
@@ -225,33 +215,34 @@ We chose to go with this latter approach as it gave us slightly better accuracy 
 The key mathematical elements of our chord recognition system are the low-pass filter, the chroma feature calculations, and pattern matching algorithm.
 In this section, we will explain in detail the theory behind each of these steps.
 
-The low-pass filter is generated using the bilinear transform, which converts a continuous transfer function to a discrete one.
-To do so, the bilinear transform uses the approximate map
-\begin{equation}
-    s \to \frac{2}{T}\frac{1 - z^{-1}}{1 + z^{-1}}
-    \label{eq:s_to_z}
-\end{equation}
-where T is the sampling period of the discrete signal.
-We can then substitute this into the continuous transfer function $H_a(s)$ to get the discrete one $H_d(z)$ by 
-\begin{equation}
-    H_d(z) = H_a\!\left(\frac{2}{T}\frac{1 - z^{-1}}{1 + z^{-1}}\right)
-    \label{eq:bilinear}
-\end{equation}
-Once we have $H_d(z)$, we can get the discrete time-domain equation by partial fractions and inverse Z-transform pairs.
-
-In general, the gain of an $n$th order Butterworth filter with DC gain of 1 is 
+For this project, we used a Butterworth filter as our low-pass filter.
+In general, the gain of an $n$th order low-pass Butterworth filter with DC gain of 1 is 
 \begin{equation}
     |H(j\omega)|^2 = \frac{1}{1 + (j\omega/j\omega_c)^{2n}}
     \label{eq:butterworth}
 \end{equation}
-where $\omega_c$ is the cutoff frequency.
+where $\omega_c$ is the cutoff frequency \cite{proakis}.
 For this project, we used a 6th order Butterworth low-pass filter with a cutoff frequency at 6000 Hz, so our gain would be
 \begin{equation*}
     |H(j\omega)|^2 = \frac{1}{1 + (j\omega/j12000\pi)^{12}}
     \label{eq:our_butterworth}
 \end{equation*}
 This cutoff frequency preserved most of the important harmonic information while still filtering out high-frequency noise, and the order gave a reasonably steep dropoff around the cutoff frequency without being computationally expensive.
-From here we used a program which used the bilinear transform to generate the time-domain filter function \cite{filter}.
+
+To convert this continuous-time filter to a discrete-time filter, we used the bilinear transform, which converts a continuous transfer function to a discrete one.
+To do so, the bilinear transform uses the approximate map
+\begin{equation}
+    s \to \frac{2}{T}\frac{1 - z^{-1}}{1 + z^{-1}}
+    \label{eq:s_to_z}
+\end{equation}
+between the Laplace transform and the Z-transform where T is the sampling period of the discrete signal \cite{proakis}.
+We can then substitute this into the continuous transfer function $H_a(s)$ to get the discrete one $H_d(z)$ by 
+\begin{equation}
+    H_d(z) = H_a\!\left(\frac{2}{T}\frac{1 - z^{-1}}{1 + z^{-1}}\right)
+    \label{eq:bilinear}
+\end{equation}
+Once we have $H_d(z)$, we can get the discrete time-domain equation by partial fractions and inverse Z-transform pairs.
+We used a program which used the bilinear transform to generate the time-domain filter function \cite{filter}.
 The frequency response of the discrete filter is given in \Cref{fig:frequency_response}.
 
 \begin{figure}[t]
@@ -265,7 +256,7 @@ The frequency response of the discrete filter is given in \Cref{fig:frequency_re
 
 Chroma features are features that describe the pitch content of a sample of music \cite{jiang}.
 A chroma feature has 12 elements, one for each note in the standard Western octave from C through B.
-The value of one of these elements corresponds to the energy present in the music signal that is contributed by that pitch.
+The value of one of these elements corresponds to the energy present in the music signal that is contributed by that pitch \cite{jiang}.
 Because of this, it is straightforward to determine the chords in a piece of music by analyzing the chroma features.
 
 The algorithm we use to generate chroma features comes from Stark and Plumbley’s paper \cite{stark}.
@@ -281,7 +272,7 @@ Once we have the windowed signal $x_w(n) = x(n)w(n)$ we take the DFT,
     \label{eq:dft}
 \end{equation}
 
-From here, the original chroma feature algorithm would sum the squared magnitudes of the DFT over certain frequency bins to get the chroma values \cite{fujishima}.
+From here, the original chroma feature extraction algorithm would sum the squared magnitudes of the DFT over certain frequency bins to get the chroma values \cite{fujishima}.
 However, this may include unwanted energy like noise in the chroma features.
 To avoid this, Stark and Plumbley only consider the maximum amplitude in a given frequency bin, thus only taking into account the energy in the note we want.
 
@@ -295,13 +286,13 @@ Then for $n = 0, 1, \ldots, 11$, we calculate
 which gives the 12 notes in an octave.
 We then do this for two octaves so we get all 24 notes in the two octaves from $f_{\text{C}3} = 130.81$ Hz to $f_{\text{C}5} = 523.25$ Hz.
 For each of the 12 elements of the chroma feature, we search through two octaves and within each octave search through two harmonics.
-This is because Stark and Plumbley have found that most instruments of interest use the lower register within this frequency range and to account for inharmonicities in real instruments \cite{stark}.
-The chroma feature is then given by
+This is done to account for inharmonicities in real instruments and because Stark and Plumbley have found that most instruments of interest use the lower register within this frequency range \cite{stark}.
+The chroma vector is then given by
 \begin{equation}
     c_n = \frac{1}{h}\sum_{\phi = 1}^2\sum_{h = 1}^2 \max_{k_0^{(n, \phi, h)} \leq k \leq k_1^{(n, \phi, h)}} X(k)
     \label{eq:chroma}
 \end{equation}
-where $c_n$ are the elements of the chroma vector $\mathbf{c}$ for $n = 0, 1, \ldots, 11$, $\phi$ is the number of the octave, $h$ is the number of the harmonic, and 
+where $c_n$ for $n = 0, 1, \ldots, 11$ are the elements of the chroma vector $\mathbf{c}$, $\phi$ is the number of the octave, $h$ is the number of the harmonic, and 
 \begin{equation*}
     k_0^{(n, \phi, h)} = k'^{(n, \phi, h)} - rh
 \end{equation*}
@@ -314,21 +305,34 @@ are the lower and upper bounds respectively of the bins to search over. Here, $r
 \end{equation*}
 is the central bin where $f_s$ is the sampling rate.
 
-Lastly, we use pattern matching to match the chroma feature to the most fitting chord.
-Pattern matching involves the use of template vectors for each chord, such as $\mathbf{v}_{\text{C}} = (1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0)$ for major C \cite{jiang}.
+Lastly, we use pattern matching to match the chroma feature to a chord.
+Pattern matching attempts to match the chroma vector to one of several chord template vectors \cite{fujishima}.
+First, we generate template vectors for each of the chords we want to consider.
+These templates are a specific arrangement of zeros and ones depending on the chord they correspond to.
+For example, the major C chord has its most significant pitch contributions from the C, E, and G pitch classes as we can see in \Cref{fig:chroma}.
+\begin{figure}[t]
+    \centering
+    \includegraphics[width = \linewidth]{../Figures/chromagram_c_major}
+    \caption{Chromagram for the C major chord generated using LibROSA.
+    Note that the distortions and noise are due to the chord being played imperfectly on the guitar and due to silence at the beginning before the chord is played and when the chord trails off at the end.}
+    \label{fig:chroma}
+\end{figure}
+Therefore, the template vector for the major C chord would be $\mathbf{v}_{\text{C}} = (1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0)$, with ones at the C, E, and G pitch classes and zeros everywhere else.
+In general, the tones that should be present in the ideal chord are one, while all the other tones not present are zero \cite{cho_chroma}.  
 We try to match the chroma vector to the closest template vector and from that get the corresponding chord.
-One simple method is to just find the Euclidean distance $||\mathbf{c} - \mathbf{v}||$ between the chroma vector and each of the template vectors and see which is the smallest.
-Another approach, which we use,  is to find the cosine similarity between two vectors, defined as 
+One simple method is to find the Euclidean distance $||\mathbf{c} - \mathbf{v}||$ between the chroma vector and each of the template vectors and see which is the smallest.
+Another approach, which we use, is to find the cosine similarity between two vectors, defined as 
 \begin{equation}
     \text{cossim}(\mathbf{c}, \mathbf{v}) = \frac{\langle\mathbf{c}, \mathbf{v}\rangle}{||\mathbf{c}|| \cdot ||\mathbf{v}||}
     \label{eq:cossim}
 \end{equation}
-which finds the cosine of the angle between the two vectors and choose the template vector with the maximum cosine similarity \cite{jiang}.
+This finds the cosine of the angle between the two vectors. 
+We then choose the template vector with the maximum cosine similarity \cite{jiang}.
 
 
 \subsection{Software/Hardware}
-There were two main types of software used for the project: the LibROSA Python package for prototyping, and Code Composer Studio (CCS) C software for implementation \cite{librosa, ccs}.
-The LibROSA Python package was used in the early stages of development for chroma feature extraction.
+There were two main types of software used for the project: the LibROSA Python package for prototyping \cite{librosa}, and Code Composer Studio (CCS) C software for implementation \cite{ccs}.
+The LibROSA Python package was used in the early stages of development for chroma feature extraction and pattern matching.
 The main motivation was to familiarize ourselves with the chroma structure and the type of inputs/outputs that our program would need.
 The LibROSA package also provided functions to visualize the contents of a chroma feature, which helped to further understand the nature of the audio transformation \cite{librosa}.
 After using this package, we were able to better organize our C code for the LCDK, keeping in mind its real-time constraints.
@@ -337,7 +341,7 @@ The majority of the software was done in Code Composer Studio in order to progra
 We were familiar with CCS since we used it extensively in prior projects.
 The main challenge was to adapt the chroma feature extraction and chord recognition into the C programming language, which requires more low-level knowledge than Python.
 Fortunately, with prior experience in C/C++ and relative simplicity of the algorithms used, we were able to quickly implement our program.
-An example code snippet from the chroma feature extraction, containing the \texttt{process\_audio\_frame()} function, found in \texttt{chromagram.h}, is provided in \Cref{code:audio} at the end of this report.
+An example code snippet of the \texttt{process\_audio\_frame()} function found in \texttt{chromagram.h} for chroma feature extraction is provided in \Cref{code:audio} at the end of this report.
 
 As aforementioned, the LCDK platform is the embedded system on which the compiled C program operates \cite{lcdk}.
 The main subsystems used were the CPU and DSP, memory, and audio codec.
@@ -364,14 +368,12 @@ We first decided to record our audio through a microphone (so we could perform l
 This would give us roughly a quarter-second of audio, long enough to achieve good resolution for the chroma features, and the sampling rate was high enough that we could capture important high frequency components to the audio.
 We also needed the number of samples to be a power of 2 for the FFT and chroma feature calculations.
 As the microphone was not very high quality, we needed to implement a low-pass filter to remove high frequency noise from the input.
-Our reasoning for choosing a 6th order Butterworth filter with cutoff at 6000 Hz was given in the Theory section.
+Our reasoning for choosing a 6th order Butterworth filter with cutoff at 6000 Hz is given in the Theory section.
 
-After low-pass filtering the recorded audio, we needed to downsample it by a factor of 4, which reduces the size of the audio sample so that subsequent calculations do not take too long.
+After low-pass filtering the recorded audio, we needed to downsample it by a factor of 4 to reduce the size of the audio sample so subsequent calculations do not take too long.
 As we want to perform real-time chord recognition, we need the chroma feature calculations to be fast enough that they do not significantly slow down the program's speed.
 We did attempt to bypass the downsampling step by recording at a lower sampling rate, but this gave very poor results and so we decided to stick with downsampling.
 
-After downsampling the filtered audio signal, we calculate the chroma feature through the algorithm described in the Theory section.
-Examples of the chroma features are given in \Cref{fig:a_major,fig:a_minor} for the A major and A minor chords respectively played on a guitar.
 \begin{figure}[!t]
     \centering
     \includegraphics[width = \linewidth]{../Figures/chromagram_a_major}
@@ -389,41 +391,46 @@ Examples of the chroma features are given in \Cref{fig:a_major,fig:a_minor} for 
     Generated with LibROSA using Python.}
     \label{fig:a_minor}
 \end{figure}
+
+After downsampling the filtered audio signal, we calculate the chroma feature through the algorithm described in the Theory section.
+Examples of the chroma features are given in \Cref{fig:a_major,fig:a_minor} for the A major and A minor chords respectively played on a guitar.
 For each frame of recorded audio (4096 samples), we generate one chroma vector.
-Due to the limited memory of the LCDK, we cannot store very many frames of audio and their chroma features at once, so we run our pipeline one at a time, recording a single frame and generating a single chroma vector and performing chord recognition on that chroma vector before moving on to the next frame of audio.
+Due to the limited memory of the LCDK, we cannot store very many frames of audio and their chroma features at once, so our program processes one frame of audio at a time, recording a single frame and generating a single chroma vector and performing chord recognition on that chroma vector before moving on to the next frame of audio.
 
 After we have generated the chroma feature, we move on to chord recognition.
-We first create the templates for each chord, and we also normalize their magnitudes in order to make comparison easier.
-After generating the templates, we calculate the cosine similarities between the chroma feature and each of the templates and find the maximum cosine similarity and choose the corresponding chord as the detected chord.
+We first create the templates for each chord and normalize their magnitudes in order to make comparison easier.
+After generating the templates, we calculate the cosine similarities between the chroma feature and each of the templates as described in the Theory section.
+We find the maximum cosine similarity and choose the corresponding chord as the detected chord.
 
 Lastly, we output the detected chord.
 We first write the chord to the CCS console in real-time in order to provide immediate feedback to the user about which chord is being played.
 We also wanted to write the chord to a final output file with timestamps of when the chord was played, so we decided to keep track of the chords detected during each time frame by storing them in an array.
 However, because of this, we now had to limit the runtime of the program to a fixed time.
-If we were to let the program run indefinitely, we would run into memory issues with a continuously growing and reallocating array, so we decided to force the program to terminate after a fixed number of loops.
-Therefore, once the program completes the given number of iterations, it processes the final chord sequence to assign timestamps, using the sampling rate and frame size to estimate the length of each loop, and writes the timestamped sequence of chords to a text file.
+If we were to let the program run indefinitely, we would run into memory issues with a constantly growing array, so we decided to force the program to terminate after a fixed number of loops.
+Therefore, once the program completes the given number of iterations, it processes the final chord sequence to assign timestamps to each chord, using the sampling rate and frame size to estimate the length of each loop, and writes the timestamped chord sequence to a text file.
 
 To make this process easier on the user, we decided after implementing all three blocks to play a ``metronome'' through speakers connected to the output port of the LCDK.
+The metronome is really just a square wave that plays on beat to when the recording starts.
 During our initial testing, we discovered that the accuracy of the chord recognition system was highly dependent on whether the chord was played in time with the program's recording loop.
-If the chord was played at the same time as the LCDK started recording, we would get good performance, but if the two were out of sync then we would have very poor performance.
-To fix this, our metronome tells the user how to time their audio to achieve good performance.
-At every loop, the beat plays once the LCDK begins recording the audio frame so that the user can play their audio in time with the recording.
+If the chord was played at the same time that the LCDK started recording, we would get good performance, but if the two were out of sync then we would have very poor performance.
+To avoid this, our metronome tells the user how to time their audio to achieve good accuracy.
+At the beginning of every loop, the beat plays once the LCDK begins recording the audio frame so that the user can play their audio in time with the recording.
 
 
 
 \subsubsection{How to Use the System}
 To use the chord recognition system, first plug a microphone into the LCDK microphone input port and plug speakers into the LCDK output port.
 If you want, you can change the sampling rate, frame size, buffer size, and runtime.
-The first three parameters are defined in \texttt{chromagram.h}: \texttt{FS} is sampling rate, \texttt{FRAME\_SIZE} is frame size, and \texttt{BUFFER\_SIZE} is buffer size which is fed into the FFT.
+The first three parameters are defined in \texttt{chromagram.h}: \texttt{FS} is sampling rate, \texttt{FRAME\_SIZE} is frame size of the original audio sample, and \texttt{BUFFER\_SIZE} is size of the audio sample after downsampling.
 Note that \texttt{FRAME\_SIZE} must be a power of 2 and \texttt{BUFFER\_SIZE} must be one-fourth of \texttt{FRAME\_SIZE} due to the downsampling.
 We choose to define them separately just to save that little bit of processing power required to perform the division by four.
 The program length is implicitly defined by \texttt{ITERATIONS} in \texttt{main.c}.
 Strictly speaking, it controls how many loops the program will run for, which is also the number of chords that will be processed.
+The runtime is approximately \texttt{ITERATIONS} times \texttt{FRAME\_SIZE} divided by \texttt{FS}, with some uncertainty due to the variable amount of time that chroma extraction and pattern matching take.
 
-Once all the parameters are defined, run the program through Code Composer Studio and you will hear the “metronome” start to play through the speakers.
-The metronome is really just a square wave that plays on beat to when the recording starts.
+Once all the parameters are defined, run the program through Code Composer Studio and you will hear the metronome start to play through the speakers.
 Once you hear the metronome, you can begin playing your audio samples into the microphone.
-For best results, play the chords in time with the metronome, because otherwise the chord will be out of sync with the recording and the performance of the chord recognition system will be poor.
+For best results, play the chords in time with the metronome, otherwise the chord will be out of sync with the recording and the performance of the chord recognition system will be poor as it does not have enough audio to accurately determine the chord.
 
 Once you start the program, the system will write the chords it recognizes to console in real time.
 Once the program has run through all iterations, it will print ``Done :)'' at which point you will find a file named \texttt{chord\_sequence.txt} in the Debug folder.
@@ -431,6 +438,15 @@ This prints out all the chords that were played during recording along with the 
 
 
 \section{Results}
+
+
+\subsection{Description}
+We graphed the performance of our chord recognition system over two different chord sequences, one following a natural chord progression in \Cref{fig:in_order} and one ordered randomly in \Cref{fig:random}.
+Both were generated from live performance.
+We follow the graph convention described by Harte \cite{harte}, where the 24 chords from C major to B minor are numbered 0 to 23, with ``no chord'' numbered 24, and we plot the number of the chord detected over time.
+
+
+\subsection{Discussion}
 
 \begin{figure}[!t]
     \centering
@@ -445,32 +461,25 @@ This prints out all the chords that were played during recording along with the 
     \label{fig:random}
 \end{figure}
 
-
-\subsection{Description}
-We graphed the performance of our chord recognition system over two different chord sequences, one ordered naturally in \Cref{fig:in_order} and one ordered randomly in \Cref{fig:random}.
-Both were generated from live performance.
-We follow the graph convention described by \cite{harte}, where the 24 chords from C major to B minor are numbered 0 to 23, with no chord assigned 24, and we plot the number of each chord over time.
-
-
-\subsection{Discussion}
 After performing many tests using different chord sequences, we can properly evaluate the performance of our project.
-We chose two particular tests to display due to some typical properties that they showcase.
-The first test, in \Cref{fig:in_order}, shows correct recognition of about 80\% of the chords played.
-The behavior in the other 20\% is notable, because it is due to playing a note off of the metronome beat.
-This meant that the full audio frame of that chord was cut off and the program did not have enough audio of decent quality to properly perform chord recognition, so the chord was incorrectly recorded.
+We chose two particular tests to display due to some important properties that they showcase.
+
+The first test, given in \Cref{fig:in_order}, shows correct recognition of about 80\% of the chords played.
+The behavior in the other 20\%, from about 8 seconds to 12 seconds, is notable because the inaccuracies were due to playing the chord off of the metronome beat.
+This meant that the full audio frame of that chord was cut off and the program did not have enough audio of decent quality to properly perform chord recognition, so the chord was incorrectly classified.
 In most cases where the audio is out of sync with the metronome, the chord is classified as chord 24 or “no chord” as seen in \Cref{fig:in_order}.
-In fewer cases, the chord is classified as the most similar chord, which is usually the minor or major chord in the same key as they share two out of three notes.
+In fewer cases, such as the last note in \Cref{fig:in_order} the chord is classified as the most similar chord, which is usually the minor or major chord in the same key  as they share two out of three notes.
 
 The behavior of the test shown in \Cref{fig:random} is more representative of the majority of our results.
-Only two of the chords were incorrectly classified (about 96\% accuracy), and both of these chords were classified as “no chord.” This is likely due to the same situation as mentioned above, in which the frame was cut off.
+Only two of the 47 chords were incorrectly classified (about 96\% accuracy), and both were classified as “no chord.” This is likely due to the same situation as mentioned above, in which recording was out of sync with the audio.
 We found that when the chord is played right on the metronome beat, it is nearly always classified correctly.
-Only when the full audio frame is misrepresented due to being cut off, does the recognition algorithm fail.
+Only when the full audio frame is misrepresented due to being cut off does the recognition algorithm fail.
 
-Another reason that could potentially incur failure is improper calibration of the microphone.
+Another factor that could potentially incur failure is improper calibration of the microphone.
 Our low pass filter was needed to filter out noise inherent to our model of microphone.
 It is possible that another microphone would need more or less aggressive filtering.
 We used an average to lower-end microphone, so we estimate that few modifications would be needed to be made to the filter.
-Use of a higher quality microphone would most likely not worsen performance.
+Use of a higher quality microphone would most likely not worsen performance and may eliminate the need for a filter.
 
 
 \bibliographystyle{IEEEtran}
@@ -478,7 +487,7 @@ Use of a higher quality microphone would most likely not worsen performance.
 
 
 \onecolumn
-\begin{lstlisting}[language = C, frame = single, caption = {An example code snippet from the chroma feature extraction containing the \texttt{process\_audio\_frame()} function.
+\begin{lstlisting}[language = C, frame = single, caption = {An example code snippet of the \texttt{process\_audio\_frame()} function during out chroma feature extraction process.
 This function is located in the \texttt{chromagram.c} file.}, captionpos = b, label = code:audio]
 void process_audio_frame(int16_t* input_audio_frame)
 {
