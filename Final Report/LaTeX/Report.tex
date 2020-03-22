@@ -123,20 +123,20 @@ Our initial plan for this project is outlined in \Cref{tab:plan}, while the actu
             &
             Perform chord recognition on chroma features.
             Test different classification algorithms (template, HMM, linear classifier, etc.) in MATLAB and find the best (most accurate) one.
-            Implement final classification algorithm on LCDK.\\
+            Implement final classification algorithm on LCDK. \\
         \hline
             \textit{Weeks 8--9}
             &
             Test chord recognition (all on LCDK).
             Test on data set.
             Test on live performance.
-            Write output to console.\\
+            Write output to console. \\
         \hline
             \textit{Weeks 9--10}
             &
             Write chord sequences to a file.
             Write a plain text file for testing.
-            Write to standard format (guitar tabs, sheet music, etc.).\\
+            Write to standard format (guitar tabs, sheet music, etc.). \\
         \hline
     \end{tabularx}
     \label{tab:plan}
@@ -299,7 +299,8 @@ where $c_n$ for $n = 0, 1, \ldots, 11$ are the elements of the chroma vector $\m
 \begin{equation*}
     k_1^{(n, \phi, h)} = k'^{(n, \phi, h)} + rh
 \end{equation*}
-are the lower and upper bounds respectively of the bins to search over. Here, $r = 2$ is the number of bins to search over for each harmonic and 
+are the lower and upper bounds respectively of the bins to search over.
+Here, $r = 2$ is the number of bins to search over for each harmonic and 
 \begin{equation*}
     k'^{(n, \phi, h)} = \text{round}\!\left(\frac{f(n)\phi h}{f_s / N}\right)
 \end{equation*}
@@ -318,7 +319,7 @@ For example, the major C chord has its most significant pitch contributions from
     \label{fig:chroma}
 \end{figure}
 Therefore, the template vector for the major C chord would be $\mathbf{v}_{\text{C}} = (1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0)$, with ones at the C, E, and G pitch classes and zeros everywhere else.
-In general, the tones that should be present in the ideal chord are one, while all the other tones not present are zero \cite{cho_chroma}.  
+In general, the tones that should be present in the ideal chord are one, while all the other tones not present are zero \cite{cho_chroma}.
 We try to match the chroma vector to the closest template vector and from that get the corresponding chord.
 One simple method is to find the Euclidean distance $||\mathbf{c} - \mathbf{v}||$ between the chroma vector and each of the template vectors and see which is the smallest.
 Another approach, which we use, is to find the cosine similarity between two vectors, defined as 
@@ -326,7 +327,7 @@ Another approach, which we use, is to find the cosine similarity between two vec
     \text{cossim}(\mathbf{c}, \mathbf{v}) = \frac{\langle\mathbf{c}, \mathbf{v}\rangle}{||\mathbf{c}|| \cdot ||\mathbf{v}||}
     \label{eq:cossim}
 \end{equation}
-This finds the cosine of the angle between the two vectors. 
+This finds the cosine of the angle between the two vectors.
 We then choose the template vector with the maximum cosine similarity \cite{jiang}.
 
 
